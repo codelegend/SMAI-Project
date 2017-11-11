@@ -1,5 +1,3 @@
-#!/bin/env python
-
 import gensim, logging, os, re
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
