@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/bin/python
 
 import gensim, logging, os, re
 
@@ -13,8 +13,12 @@ class SentenceIterator(object):
         dirname = self.dir_prefix + suffix
         for fname in os.listdir(dirname):
             for line in open(os.path.join(dirname, fname)):
-                yield re.split('[.!?] ', line) # utf-8 encoding needed?
+                sanitised_line = re.sub('<br />|<i/?>|<hr>', '', line)
+                for sentence in re.split('[.!?] ', sanitised_line):
+                    yield re.split('[,; ]', sentence)
 
-sentences = SentenceIterator('../datasets/')
+sentences = SentenceIterator('/home/soumya/Desktop/SEM5/SMAI/project/aclImdb/')
+# for elem in sentences:
+#     print elem
 model = gensim.models.Word2Vec(sentences, min_count=3)
 model.save('../models/word2vec')
