@@ -24,4 +24,44 @@ def load_imdb(file_prefix):
             for sentence in re.split('[.!?] ', sanitised_line):
                 for word in re.split('[,; ]', sentence):
 
-def train():
+def train(x, y, epochs=10, batch_size=50):
+    net = model.SentenceNet()
+    loss = torch.nn.CrossEntropyLoss()
+    optimizer = optim.SDG(net.parameters(), lr=0.001)
+    data_size = len(x)
+    num_batches = int(data_size/batch_size)
+    count = 0
+    for epoch in range(epochs):
+        if shuffle:
+            shuffle_indices = np.random.permutation(np.arange(data_size))
+            x_shuffled = x[shuffle_indices]
+            y_shuffled = y[shuffle_indices]
+        else:
+            x_shuffled = x
+            y_shuffled = y
+
+        final_loss = 0
+        for batch_num in range(num_batches):
+            start_index = batch_num * batch_size
+            end_index = min((batch_num + 1) * batch_size, data_size)
+            x_batch = x_batch[start_index:end_index]
+            y_batch = y_batch[start_index:end_index]
+            batch = torch.FloatTensor(x_batch).view(len(x_batch), 100, 100)
+            batch = autograd.Variable(batch)
+            optimizer.zero_grad()
+            out = net.forward(batch)
+            _, pred = out.max(1)
+            target = y_batch[:,1]
+            target = np.float32(target)
+            target = autograd.Variable(torch.FloatTensor(target)).long()
+            output = loss(out, target)
+            output.backward()
+            optimizer.step()
+            count += 1
+            final_loss += output.data[0]
+            if batch_num % 100 == 0:
+                print("Batch Number: " + str(batch_num))
+                print("Loss: ", final_loss/(batch_num+1))
+        print("Loss after epoch " + str(epoch) + " = " + str(final_loss/num_batches))
+        # f = str('train_backup' + str(epoch) + '.pt')
+        # torch.save(net.state_dict(), f)
