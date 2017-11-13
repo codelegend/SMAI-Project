@@ -18,7 +18,7 @@ def load_class(model, dirname):
     examples = []
     for fname in os.listdir(dirname):
         try:
-            with open(fname) as f:
+            with open(str(dirname+fname)) as f:
                 for line in f.readlines():
                     sanitised_line = re.sub('<br />|<i/?>|<hr>', '', line)
                     for sentence in re.split('[.!?]', sanitised_line):
@@ -27,8 +27,10 @@ def load_class(model, dirname):
                             concat.append(model[word])
                         concat.append([0]*(WORDS_IN_SENTENCE*100 - length(concat)))
                         examples.append(concat)
-        except Exception,e:
-            print(e)
+        except Exception as e:
+            # print(e)
+            raise
+            pass
     return examples
 
 def load_imdb(file_prefix):
@@ -37,10 +39,10 @@ def load_imdb(file_prefix):
 
     examples = []
     labels = []
-    pos_examples = load_class(model, file_prefix + 'pos')
+    pos_examples = load_class(model, file_prefix + 'pos/')
     examples.append(pos_examples)
     labels.append([1]*(len(pos_examples)/100))
-    neg_examples = load_class(model, file_prefix + 'neg')
+    neg_examples = load_class(model, file_prefix + 'neg/')
     labels.append([0]*(len(neg_examples)/100))
     examples.append(neg_examples)
     return (examples, labels)
@@ -88,5 +90,8 @@ def train(x, y, epochs=10, batch_size=50):
         # f = str('train_backup' + str(epoch) + '.pt')
         # torch.save(net.state_dict(), f)
 
-(X, Y) = load_imdb('../datasets/aclImdb/train/')
+cwd = os.getcwd()
+cwd = re.split('src', cwd)[0]
+print(cwd)
+(X, Y) = load_imdb(str( cwd + '/datasets/aclImdb/train/'))
 train(X, Y)
