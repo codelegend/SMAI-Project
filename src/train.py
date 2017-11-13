@@ -17,15 +17,18 @@ WORDS_IN_SENTENCE = 100
 def load_class(model, dirname):
     examples = []
     for fname in os.listdir(dirname):
-        with open(fname) as f:
-            for line in open(os.path.join(dirname, fname)):
-                sanitised_line = re.sub('<br />|<i/?>|<hr>', '', line
-                for sentence in re.split('[.!?] ', sanitised_line
-                    concat = []
-                    for word in re.split('[,; ]', sentence)
-                        concat.append(model[word])
-                    concat.append([0]*(WORDS_IN_SENTENCE*100 - length(concat)))
-                    examples.append(concat)
+        try:
+            with open(fname) as f:
+                for line in open(os.path.join(dirname, fname)):
+                    sanitised_line = re.sub('<br />|<i/?>|<hr>', '', line)
+                    for sentence in re.split('[.!?]', sanitised_line):
+                        concat = []
+                        for word in re.split('[,; ]', sentence):
+                            concat.append(model[word])
+                        concat.append([0]*(WORDS_IN_SENTENCE*100 - length(concat)))
+                        examples.append(concat)
+        except:
+            print(fname,"File can't be opened")
     return examples
 
 def load_imdb(file_prefix):
@@ -34,11 +37,11 @@ def load_imdb(file_prefix):
 
     examples = []
     labels = []
-    pos_examples = load_class(model, 'pos')
+    pos_examples = load_class(model, file_prefix + 'pos')
     examples.append(pos_examples)
     labels.append([1]*(length(pos_examples)/100))
-    neg_examples = load_class(model, 'neg')
-    labels.append([0]*(length(neg_examples)/100
+    neg_examples = load_class(model, file_prefix + 'neg')
+    labels.append([0]*(length(neg_examples)/100))
     examples.append(neg_examples)
     return (examples, labels)
 
@@ -84,5 +87,5 @@ def train(x, y, epochs=10, batch_size=50):
         # f = str('train_backup' + str(epoch) + '.pt')
         # torch.save(net.state_dict(), f)
 
-(X, Y) = load_imdb('/home/soumya/Desktop/SEM5/SMAI/project/aclImdb/')
+(X, Y) = load_imdb('../aclImdb/train/')
 train(X, Y)
