@@ -1,9 +1,10 @@
 #!/usr/bin/python
-import os, sys, argparse, logging
-
+import os, sys, logging
+import argparse
+from importlib import import_module
 
 def check_directory_structure():
-    dirs = ['var', 'datasets2']
+    dirs = ['var', 'var/train', 'var/wordvec', 'datasets']
     for d in dirs:
         if not os.path.isdir(d):
             logging.error("Directory %s not found" % d)
@@ -32,7 +33,7 @@ def parse_args():
     return parser.parse_args()
 
 def main():
-    logging.basicConfig(format='%(asctime)s [%(levelname)s] {%(filename)s #%(lineno)d} %(message)s',
+    logging.basicConfig(format='[%(asctime)s] [%(levelname)s] {%(filename)s #%(lineno)d} %(message)s',
         level=0)
     args = parse_args()
     if args.log_level:
@@ -41,6 +42,6 @@ def main():
     if not check_directory_structure():
         sys.exit(1)
 
-    # if args.preprocess:
+    logging.info('Exiting...')
 
 main()
