@@ -37,6 +37,23 @@ Usage:
 - `--parser PARSER`: Data parser to use (`src/parsers/PARSER.py`)
 - `--log-level LOG_LEVEL`: Logging level (10 for testing, and 40 for production. Default: 30)
 
+Workflow
+---------
+- `preprocess.py`:
+  - Learns word vectors, and saves them to `var/wordvec/...`
+- `train.py`:
+  - Trains the model, and saves weights to `var/train/...`
+  - Logs training reports to `var/log/train/...`
+- `test.py`:
+  - Loads weights from `var/train/...`, and predicts the labels for test data
+  - Logs training reports to `var/log/test/...`
+  - If labels are known (validation), then scores are reported.
+- `models/MODEL.py`
+  - `class Model` implements the CNN.
+- `parsers/PARSER.py`
+  - Implements classes to lazy-load data, and for generating word vectors using the trained word vector vocab.
+
+
 Adding Models:
 --------------
 Check Readme in `src/models/`
