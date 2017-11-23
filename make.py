@@ -4,7 +4,7 @@ import argparse
 from importlib import import_module
 
 def check_directory_structure():
-    dirs = ['var', 'var/train', 'var/wordvec', 'var/log', 'datasets']
+    dirs = ['var', 'var/train', 'var/wordvec', 'var/log', 'var/log/train', 'var/log/test', 'datasets']
     for d in dirs:
         if not os.path.isdir(d):
             logging.critical("Directory `%s` not found" % d)
@@ -55,6 +55,10 @@ def main():
         logging.info("CUDA Available: %s", 'YES' if args.cuda else 'NO')
 
     if args.task == 'preprocess':
+        import_module('src.preprocess') \
+        .learn_word_vectors(dataset=args.dataset,
+                            parser_name=args.parser,
+                            output_dir='var/wordvec/%s' % args.dataset)
         pass
     elif args.task == 'train':
         pass
