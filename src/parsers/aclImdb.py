@@ -1,4 +1,6 @@
 import os
+import gensim
+import numpy as np
 
 # **DO NOT CHANGE THE CLASS NAME**
 class SentenceLoader(object):
@@ -59,15 +61,44 @@ class SentenceLoader(object):
 
 # **DO NOT CHANGE THE CLASS NAME**
 class DataLoader(object):
-    def __init__(self, dataset_dir, wordvec_dir, mode='train', partial_dataset=False):
+    def __init__(self, dataset_dir, wordvec_dir, mode='train', partial_dataset=False, wordvec_file=None, num_words=10, vec_size=100):
+        # load sentences
         self.sentences = SentenceLoader(dataset_dir, with_label=True, full_feature=True, partial_dataset=partial_dataset)
-        pass
+
+        # load the wordvec model
+        if wordvec_file is None:
+            files = os.listdir(wordvec_dir)
+            files.sort()
+            wordvec_file = files[-1]
+        wordvec_file = os.path.join(wordvec_dir, wordvec_file)
+        model = gensim.models.Word2Vec.load(wordvec_file)
+        self.word_vectors = model.wv # no updates
+        del model
+
+        # config
+        self.num_words = num_words
+        self.vec_size = vec_size
 
     # returns [x, y]: feature and label
     def __iter__(self):
         try:
             while True:
-                yield self.sentences.next()
+                sentence, label = self.sentences.next()
+                sentence.reverse()
+                wordvec = np.ndarray(0)
+                count = 0 # only add `self.num_words` words
+                for word in sentence:
+                    if word in self.word_vectors.vocab:
+                        wordvec.append(self.word_vectors[word])
+                        count += 1
+                        if count == self.num_words:
+                            break
+
+                # pad with zeros, if sentence is too small
+                if count < self.num_words:
+                    wordvec.append(np.zeros(
+                        (self.num_words - count) * self.vec_size))
+                yield wordvec, label
         except:
             pass
 
