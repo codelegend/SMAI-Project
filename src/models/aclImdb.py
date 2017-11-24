@@ -31,21 +31,27 @@ class Model(nn.Module):
         self.maxpools = nn.ModuleList(self.maxpools)
 
         # NN
-        layer_sizes = [fc_size, 100]
+        layer_sizes = [fc_size, 300]
         self.FC1 = nn.Linear(layer_sizes[0], layer_sizes[1])
         self.dropout1 = nn.Dropout(p = 0.5)
         self.layer = nn.Linear(layer_sizes[1], 2)
 
         # random-initialization
 
-    def conv_pool(self, x, conv, pool):
-        return x
-
-
     def forward(self, x):
         '''
         Pass x through the CNN
         '''
+        max_x = []
+        for i in range(len(self.convs)):
+            max_x.append(self.maxpools[i](self.convs[i](x)))
+        x = torch.cat(max_x, 1)
+
+        x = x.view(x.size(0), -1) #reshape
+        x = self.FC1(x)
+        x = self.Dropout1(x)
+        x = self.layer(x)
+        x = F.softmax(x)
         return x
 
     def num_flat_features(self, x):
@@ -56,3 +62,6 @@ Example model CNN
 @input: any Tensor
 @returns: @input tensor
 '''
+
+net = Model()
+print(net.forward())
