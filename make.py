@@ -26,6 +26,10 @@ def parse_args():
     parser.add_argument('--parser', dest='parser',
         default='parser_example',
         help='Data parser to use (stored in src/parsers/PARSER.py)')
+
+    parser.add_argument('--load-from', dest='load_from',
+        default=None,
+        help='Information about backup to load from.')
     parser.add_argument('--output', dest='output',
         default=None,
         help='Output folder/file')
@@ -46,6 +50,7 @@ def main():
     if args.log_level:
         logging.basicConfig(level=args.log_level)
         del args.log_level
+
     if not check_directory_structure():
         sys.exit(1)
 
@@ -54,18 +59,21 @@ def main():
         args.cuda = torch.cuda.is_available()
         logging.info("CUDA Available: %s", 'YES' if args.cuda else 'NO')
 
+        # some cuda config
+        import torch.backends.cudnn as cudnn
+        cudnn.benchmark = True
+
+
     if args.task == 'preprocess':
         import_module('src.preprocess') \
         .learn_word_vectors(dataset=args.dataset,
                             parser_name=args.parser,
                             output_dir='var/wordvec/%s' % args.dataset)
-        pass
     elif args.task == 'train':
-        pass
+        import_module('src.train').train(args)
     elif args.task == 'test':
-        pass
-    else:
-        logging.error('Invalid task type `%s`', args.task)
+        import_module('src.test').test(args)
+
     logging.info('Exiting...')
 
 main()

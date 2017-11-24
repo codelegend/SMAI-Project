@@ -1,6 +1,7 @@
 import os
 import gensim
 import numpy as np
+import logging
 
 # **DO NOT CHANGE THE CLASS NAME**
 class SentenceLoader(object):
@@ -43,7 +44,7 @@ class SentenceLoader(object):
                     if self.full_feature:
                         content_temp = []
                         for c in content: content_temp.extend(c)
-                        content = content_temp
+                        content = [content_temp]
                     if self.with_label:
                         content = map(lambda line: (line, file_des[2]), content)
 
@@ -61,11 +62,11 @@ class SentenceLoader(object):
 
 # **DO NOT CHANGE THE CLASS NAME**
 class DataLoader(object):
-    def __init__(self, dataset_dir, wordvec_dir, mode='train', partial_dataset=False, wordvec_file=None, num_words=10, vec_size=100):
+    def __init__(self, dataset_dir, wordvec_dir, mode='train', partial_dataset=False, wordvec_file=None, num_words=10, wordvec_dim=100):
         # load sentences
         self.sentences = SentenceLoader(dataset_dir, with_label=True, full_feature=True, partial_dataset=partial_dataset)
 
-        # load the wordvec model
+        # load the word vectors
         if wordvec_file is None:
             files = os.listdir(wordvec_dir)
             files.sort()
@@ -77,32 +78,27 @@ class DataLoader(object):
 
         # config
         self.num_words = num_words
-        self.vec_size = vec_size
+        self.wordvec_dim = wordvec_dim
+        self.partial_dataset = partial_dataset
+        self.dataset_dir = dataset_dir
 
     # returns [x, y]: feature and label
     def __iter__(self):
-        try:
-            while True:
-                sentence, label = self.sentences.next()
-                sentence.reverse()
-                wordvec = np.ndarray(0)
-                count = 0 # only add `self.num_words` words
-                for word in sentence:
-                    if word in self.word_vectors.vocab:
-                        wordvec.append(self.word_vectors[word])
-                        count += 1
-                        if count == self.num_words:
-                            break
+        for sentence, label in self.sentences:
+            sentence.reverse()
+            wordvec = np.ndarray((0, self.wordvec_dim))
+            count = 0 # only add `self.num_words` words
+            for word in sentence:
+                if word in self.word_vectors.vocab:
+                    wordvec = np.append(wordvec, [self.word_vectors[word]], axis=0)
+                    count += 1
+                    if count == self.num_words:
+                        break
 
-                # pad with zeros, if sentence is too small
-                if count < self.num_words:
-                    wordvec.append(np.zeros(
-                        (self.num_words - count) * self.vec_size))
-                yield wordvec, label
-        except:
-            pass
-
-
+            # pad with zeros, if sentence is too small
+            if count < self.num_words:
+                wordvec = np.append(wordvec, np.zeros((self.num_words - count, self.wordvec_dim)), axis=0)
+            yield wordvec, label
 
 helpstr = '''(Version 1.0)
 Parser for aclImdb Dataset

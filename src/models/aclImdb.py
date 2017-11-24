@@ -6,13 +6,13 @@ import numpy as np
 
 # **DO NOT CHANGE THE CLASS NAME**
 class Model(nn.Module):
-    def __init__(self, sentence_len=100, wordvec_dim=100,
+    def __init__(self, num_classes=2,
+        sentence_len=100, wordvec_dim=100,
         filter_sizes=[(3, 100), (4, 100), (5, 100)]):
-        super(Model, self).__init__()
-        '''
-        Add layers here
-        '''
 
+        super(Model, self).__init__()
+        self.num_classes = num_classes
+        
         # Convolution layer and max pooling
         self.convs = []
         self.maxpools = []
