@@ -70,6 +70,7 @@ def main():
         import torch.backends.cudnn as cudnn
         cudnn.benchmark = True
 
+    logging.info('Using CUDA: %s', 'YES' if args.cuda else 'NO')
     if args.task == 'preprocess':
         import_module('src.preprocess') \
         .learn_word_vectors(dataset=args.dataset,
