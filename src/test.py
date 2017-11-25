@@ -48,7 +48,7 @@ def test(args): # DO NOT EDIT THIS LINE
     test_start_time = time.time()
     run_tests(convnet=convnet, data_loader=data_loader,
               use_cuda=args.cuda)
-    test_start_time = time.time()
+    test_end_time = time.time()
     logging.info('Total testing time: %f', test_end_time - test_start_time)
 
 '''
