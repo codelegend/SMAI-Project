@@ -63,6 +63,9 @@ def run_tests(convnet, data_loader,
     num_batches = 1 + (len(data_loader) - 1) / batch_size
     logging.debug('#batches = %d', num_batches)
 
+    if use_cuda:
+        convnet.cuda()
+
     actual, predicted = np.array([]), np.array([])
     freq = [0,0]
     for batch_id in xrange(num_batches):
@@ -84,7 +87,7 @@ def run_tests(convnet, data_loader,
         output = convnet.forward(batch_X)
 
         _, pred = output.max(1)
-        predicted = np.append(predicted, [pred.data.numpy()])
+        predicted = np.append(predicted, [pred.data.cpu().numpy()])
         actual = np.append(actual, [batch_Y])
 
         # debug
