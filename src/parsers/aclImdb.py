@@ -1,6 +1,7 @@
 import os
 import gensim
 import numpy as np
+import re
 
 # **DO NOT CHANGE THE CLASS NAME**
 class SentenceLoader(object):
@@ -52,9 +53,16 @@ class SentenceLoader(object):
 
     # return the lines after splitting into words, and filtering.
     def process_line(self, content):
-        content = content.replace('Mr.', 'Mr')
-        content = content.replace('Mrs.', 'Mrs')
-        content = content.replace('Ms.', 'Ms')
+        content = re.sub(r"[^A-Za-z0-9,.!?\']"," ",content)
+        content = re.sub(r"n't"," not ",content)
+        content = re.sub(r"'nt"," not ",content)
+        content = re.sub(r"'","",content)
+        content = re.sub(r","," , ",content)
+        content = re.sub(r"!"," ! ",content)
+        content = re.sub(r"\?"," ? ",content)
+        content = re.sub(r"Mr.","Mr",content)
+        content = re.sub(r"Mrs.","Mrs",content)
+        content = re.sub(r"Ms.","Ms",content)
         content = content.split('.')
         content = [line.split() for line in content]
         return content
