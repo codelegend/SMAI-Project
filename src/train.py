@@ -16,28 +16,33 @@ Training:
 '''
 def train(args): # DO NOT EDIT THIS LINE
     '''
-    Load the model, and setup cuda, if needed
-    '''
-    model_src = import_module('src.models.%s' % args.model)
-    convnet = model_src.Model()
-
-    '''
     load the dataset
     '''
     parser = import_module('src.parsers.%s' % args.parser)
     data_loader = parser.DataLoader(
         dataset_dir='datasets/%s' % args.dataset,
         wordvec_dir='var/wordvec/%s/' % args.dataset,
-        partial_dataset=True,
-        num_words=20)
+        partial_dataset=False,
+        sentence_len=20)
+
+    '''
+    Load the model, and setup cuda, if needed
+    '''
+    model_src = import_module('src.models.%s' % args.model)
+    convnet = model_src.Model(sentence_len=data_loader.sentence_len)
 
     '''
     Train the model
     '''
     train_model(convnet=convnet,
                 data_loader=data_loader,
-                epochs=2, use_cuda=args.cuda)
+                epochs=100, use_cuda=args.cuda,
+                batch_size=100)
 
+'''
+Trains the CNN, with multiple epochs
+
+'''
 def train_model(convnet, data_loader, epochs=100,
                 batch_size=100, shuffle=False, use_cuda=False):
     # Loss function and optimizer for the learning
@@ -47,36 +52,29 @@ def train_model(convnet, data_loader, epochs=100,
         convnet = convnet.cuda()
         loss = loss.cuda()
 
-    features = []
-    # NOTE: each label in labels is a probability distribution
-    #       so, if the class is known, then it looks like [1, 0, 0...]
-    labels = []
-    for feature, label in data_loader:
-        features.append(feature)
-        label_dist = [0] * convnet.num_classes
-        label_dist[label] = 1
-        labels.append(label_dist)
-    features = np.array(features)
-    labels = np.array(features)
-
-    num_batches = 1 + (len(features) - 1) / batch_size
+    num_batches = 1 + (len(data_loader) - 1) / batch_size
 
     for epoch in xrange(epochs):
         start_time = time.time()
 
-        '''
-        Run an epoch
-        Feed the data in batches of `batch_size`
-        '''
-        train_X, train_Y = features, labels
-        train_X = np.array_split(train_X, num_batches)
-        train_Y = np.array_split(train_Y, num_batches)
-
         epoch_loss = 0
 
+        data_iter = iter(data_loader)
+
         for batch_id in xrange(num_batches):
+            # load current batch
+            batch_X, batch_Y = [], []
+            try:
+                for i in xrange(batch_size):
+                    feature, label = data_iter.next()
+                    batch_X.append(feature)
+                    batch_Y.append(label)
+
+            except StopIteration:
+                pass
+
             # make the batch feature variable
-            batch_X = torch.FloatTensor(train_X[batch_id])
+            batch_X = torch.FloatTensor(batch_X)
             if use_cuda: batch_X = batch_X.cuda()
             batch_X = autograd.Variable(batch_X)
 
@@ -84,14 +82,11 @@ def train_model(convnet, data_loader, epochs=100,
             optimizer.zero_grad()
             output = convnet.forward(batch_X)
             if use_cuda: output = output.cuda()
-            _, pred = output.max(1)
 
             # compute loss, and backward pass
-            batch_Y = train_Y[batch_id]
             batch_Y = torch.FloatTensor(batch_Y)
             if use_cuda: batch_Y = batch_Y.cuda()
-            batch_Y = autograd.Variable(batch_Y)
-
+            batch_Y = autograd.Variable(batch_Y).long()
             loss = loss_func(output, batch_Y)
             if use_cuda: loss.cuda()
             loss.backward()
@@ -101,8 +96,12 @@ def train_model(convnet, data_loader, epochs=100,
             epoch_loss += loss.data[0]
 
             # logging
-            if batch_id % 100 == 1:
+            if batch_id % 10 == 1:
                 logging.debug('Batch %d: loss = %f', batch_id, epoch_loss / batch_id)
+
+            # cleanup
+            del batch_X, batch_Y, output, loss
+
 
 
         end_time = time.time()

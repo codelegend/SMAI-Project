@@ -45,7 +45,9 @@ def parse_args():
     return parser.parse_args()
 
 def main():
-    logging.basicConfig(format='[%(asctime)s] [%(levelname)s] %(message)s', level=0)
+    # logging.basicConfig(format='[%(asctime)s] [%(levelname)s] %(message)s', level=0)
+    logging.basicConfig(format='[%(levelname)s] %(filename)s #%(lineno)d %(message)s', level=0)
+
     args = parse_args()
     if args.log_level:
         logging.basicConfig(level=args.log_level)

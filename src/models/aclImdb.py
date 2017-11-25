@@ -1,3 +1,5 @@
+import logging
+
 import torch
 from torch import nn
 import torch.nn.functional as F
@@ -6,13 +8,13 @@ import numpy as np
 
 # **DO NOT CHANGE THE CLASS NAME**
 class Model(nn.Module):
-    def __init__(self, num_classes=2,
+    def __init__(self, n_classes=2,
         sentence_len=100, wordvec_dim=100,
         filter_sizes=[(3, 100), (4, 100), (5, 100)]):
 
         super(Model, self).__init__()
-        self.num_classes = num_classes
-        
+        self.n_classes = n_classes
+
         # Convolution layer and max pooling
         self.convs = []
         self.maxpools = []
@@ -23,7 +25,7 @@ class Model(nn.Module):
                 nn.Conv2d(1, num_filters, (filter_width, wordvec_dim))
             )
             self.maxpools.append(
-                nn.MaxPool1d(sentence_len - filter_width + 1)
+                nn.MaxPool2d((sentence_len - filter_width + 1, 1))
             )
             fc_size += num_filters
 
@@ -44,14 +46,20 @@ class Model(nn.Module):
         '''
         max_x = []
         for i in range(len(self.convs)):
-            max_x.append(self.maxpools[i](self.convs[i](x)))
+            curr = x
+            curr_shape = curr.data.shape
+            curr = curr.view(curr_shape[0], 1, curr_shape[1], curr_shape[2])
+            curr = self.convs[i](curr)
+            curr = self.maxpools[i](curr)
+            curr = F.relu(curr)
+            max_x.append(curr)
         x = torch.cat(max_x, 1)
 
-        x = x.view(x.size(0), -1) #reshape
+        x = x.view(x.size(0), -1) # make it a single row
         x = self.FC1(x)
-        x = self.Dropout1(x)
+        x = self.dropout1(x)
         x = self.layer(x)
-        x = F.softmax(x)
+        # x = F.softmax(x)
         return x
 
     def num_flat_features(self, x):
@@ -62,6 +70,3 @@ Example model CNN
 @input: any Tensor
 @returns: @input tensor
 '''
-
-net = Model()
-print(net.forward())
