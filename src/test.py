@@ -23,7 +23,7 @@ def test(args): # DO NOT EDIT THIS LINE
         partial_dataset=False,
         sentence_len=20,
         mode='test',
-        shuffle=True)
+        shuffle=False)
 
     '''
     Load the network and the saved weights
@@ -55,6 +55,7 @@ def run_tests(convnet, data_loader,
     num_batches = 1 + (len(data_loader) - 1) / batch_size
 
     actual, predicted = np.array([]), np.array([])
+    freq = [0,0]
     for batch_id in xrange(num_batches):
         # load current batch
         batch_X, batch_Y = [], []
@@ -65,6 +66,9 @@ def run_tests(convnet, data_loader,
                 batch_Y.append(label)
         except StopIteration:
             pass
+
+        batch_Y = np.array(batch_Y)
+
         batch_X = torch.FloatTensor(batch_X)
         if use_cuda: batch_X = batch_X.cuda()
         batch_X = autograd.Variable(batch_X)
@@ -74,11 +78,22 @@ def run_tests(convnet, data_loader,
         predicted = np.append(predicted, [pred.data.numpy()])
         actual = np.append(actual, [batch_Y])
 
+        # debug
+        freq[0] += batch_Y[batch_Y == 0].shape[0]
+        freq[1] += batch_Y[batch_Y == 1].shape[0]
+
         if (batch_id + 1) % 10 == 0:
             logging.debug('Batch %d done', batch_id+1)
+            logging.debug('> pos = %d, neg = %d', freq[1], freq[0])
+            freq[0] = 0
+            freq[1] = 0
 
     ### Compute scores
     logging.info('Prediction done. Scores:')
+    logging.debug('Actual pos=%d', actual[actual == 1].shape[0])
+    logging.debug('Actual neg=%d', actual[actual == 0].shape[0])
+    logging.debug('Predicted pos=%d', predicted[predicted == 1].shape[0])
+    logging.debug('Predicted neg=%d', predicted[predicted == 0].shape[0])
     logging.info('> accuracy = %f', metrics.accuracy_score(actual, predicted))
     logging.info('> precision = %f', metrics.precision_score(actual, predicted))
     logging.info('> recall = %f', metrics.recall_score(actual, predicted))

@@ -22,6 +22,7 @@ def train(args): # DO NOT EDIT THIS LINE
         dataset_dir='datasets/%s' % args.dataset,
         wordvec_dir='var/wordvec/%s/' % args.dataset,
         partial_dataset=False,
+        shuffle=True,
         sentence_len=20)
 
     '''
