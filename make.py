@@ -1,14 +1,28 @@
 #!/usr/bin/python
-import os, sys, logging
+import os, sys, logging, logging.config, yaml
 import argparse
 from importlib import import_module
 
+def setup_logging(args):
+    config = {}
+    with open('logging.yaml') as f:
+        config = yaml.safe_load(f)
+        log_file = 'var/log/%s/' % args.task
+        if args.task == 'preprocess':
+            log_file += args.parser
+        else:
+            log_file += args.model
+        log_file += '.log'
+        config['handlers']['file_handler']['filename'] = log_file
+    logging.config.dictConfig(config)
+
+
 def check_directory_structure():
-    dirs = ['var', 'var/train', 'var/wordvec', 'var/log', 'var/log/train', 'var/log/test', 'datasets']
+    dirs = ['var', 'var/train', 'var/wordvec', 'var/log', 'var/log/train', 'var/log/test', 'var/log/preprocess', 'datasets']
     for d in dirs:
         if not os.path.isdir(d):
-            logging.critical("Directory `%s` not found" % d)
-            return False
+            logging.warn("Directory `%s` not found, creating." % d)
+            os.mkdir(d)
     return True
 
 def parse_args():
@@ -32,11 +46,7 @@ def parse_args():
         help='Information about backup to load from.')
     parser.add_argument('--output', dest='output',
         default=None,
-        help='Output folder/file')
-
-    parser.add_argument('--log-level', dest='log_level',
-        type=int, default=30,
-        help='Logging level (10 for testing, and 40 for production. Default: 30)')
+        help='Output file')
 
     parser.add_argument('--gpu', dest='cuda',
         action='store_true',
@@ -45,16 +55,11 @@ def parse_args():
     return parser.parse_args()
 
 def main():
-    # logging.basicConfig(format='[%(asctime)s] [%(levelname)s] %(message)s', level=0)
-    logging.basicConfig(format='[%(levelname)s] %(filename)s #%(lineno)d %(message)s', level=0)
-
-    args = parse_args()
-    if args.log_level:
-        logging.basicConfig(level=args.log_level)
-        del args.log_level
-
     if not check_directory_structure():
         sys.exit(1)
+
+    args = parse_args()
+    setup_logging(args)
 
     if args.cuda:
         import torch
@@ -64,7 +69,6 @@ def main():
         # some cuda config
         import torch.backends.cudnn as cudnn
         cudnn.benchmark = True
-
 
     if args.task == 'preprocess':
         import_module('src.preprocess') \
@@ -76,6 +80,6 @@ def main():
     elif args.task == 'test':
         import_module('src.test').test(args)
 
-    logging.info('Exiting...')
+    logging.info('Exiting...\n%s', '-' * 80)
 
 main()
