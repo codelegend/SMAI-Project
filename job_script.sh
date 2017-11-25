@@ -17,10 +17,10 @@ module add cuda/8.0
 module add cudnn/7-cuda-8.0
 
 # wordvec generation
-python make.py preprocess --dataset=aclImdb --parser=aclImdb --model=aclImdb
+python make.py preprocess --dataset=aclImdb --parser=aclImdb --model=aclImdb --gpu
 
 # training
-python make.py train --dataset=aclImdb --parser=aclImdb --model=aclImdb --output=run_25_11_01
+python make.py train --dataset=aclImdb --parser=aclImdb --model=aclImdb --output=run_25_11_01 --gpu
 
 # testing
-python make.py test --dataset=aclImdb --parser=aclImdb --model=aclImdb --load-from=run_25_11_01_final
+python make.py test --dataset=aclImdb --parser=aclImdb --model=aclImdb --load-from=run_25_11_01_final --gpu
