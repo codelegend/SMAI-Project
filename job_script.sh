@@ -3,13 +3,12 @@
 # Script for sbatch (Slurm batch run) #
 ########################################
 
-#SBATCH -A $USER
+#SBATCH -A soumya.v 
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=4
-#SBATCH --job-name=aclImdb_init_run
+#SBATCH --cpus-per-task=10
 #SBATCH --time=10:00
-#SBATCH --gres=gpu:2
-#SBATCH --mem-per-cpu=1024
+#SBATCH --gres=gpu:1
+#SBATCH --mem-per-cpu=2048
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=anurudh.peduri@research.iiit.ac.in
 
