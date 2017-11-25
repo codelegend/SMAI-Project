@@ -10,6 +10,8 @@
 #SBATCH --time=10:00
 #SBATCH --gres=gpu:2
 #SBATCH --mem-per-cpu=1024
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=anurudh.peduri@research.iiit.ac.in
 
 module add cuda/8.0
 module add cudnn/7-cuda-8.0
