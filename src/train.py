@@ -1,11 +1,10 @@
-import sys, time, logging
+import sys, time, os, logging
 import numpy as np
 import torch
 from torch import autograd
 import torch.nn.functional as F
 import torch.optim as optim
 from importlib import import_module
-
 
 '''
 Training:
@@ -37,20 +36,26 @@ def train(args): # DO NOT EDIT THIS LINE
     train_model(convnet=convnet,
                 data_loader=data_loader,
                 epochs=100, use_cuda=args.cuda,
-                batch_size=100)
+                batch_size=100,
+                train_dir='var/train/%s.%s/' % (args.model, args.dataset),
+                output_file_name=args.output)
 
 '''
 Trains the CNN, with multiple epochs
 
 '''
 def train_model(convnet, data_loader, epochs=100,
-                batch_size=100, shuffle=False, use_cuda=False):
+                batch_size=100, shuffle=False, use_cuda=False,
+                train_dir='var/train', output_file_name='learn'):
     # Loss function and optimizer for the learning
     loss_func = torch.nn.CrossEntropyLoss()
     optimizer = optim.Adam(convnet.parameters(), lr=0.001)
     if use_cuda:
         convnet = convnet.cuda()
         loss = loss.cuda()
+
+    # check directory for saving train weights
+    if not os.path.isdir(train_dir): os.mkdir(train_dir)
 
     num_batches = 1 + (len(data_loader) - 1) / batch_size
 
@@ -102,10 +107,18 @@ def train_model(convnet, data_loader, epochs=100,
             # cleanup
             del batch_X, batch_Y, output, loss
 
-
-
         end_time = time.time()
+
+        # save weights
+        if (epoch + 1) % 1 == 0:
+            logging.info('Saving weights at epoch %d', epoch + 1)
+            save_file = os.path.join(train_dir, '%s_backup_%d.pt' % (output_file_name, (epoch + 1) / 10))
+            torch.save(convnet.state_dict(), save_file)
 
         ### log epoch execution statistics
         logging.info('Epoch %d: time = %.3f', epoch, end_time - start_time)
         logging.info('> Loss = %f', epoch_loss / num_batches)
+
+    # save final trained weights
+    save_file = os.path.join(train_dir, '%s_final.pt' % (output_file_name, (epoch + 1) / 10))
+    torch.save(convnet.state_dict(), save_file)
