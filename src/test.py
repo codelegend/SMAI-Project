@@ -16,6 +16,8 @@ def test(args): # DO NOT EDIT THIS LINE
     '''
     load the dataset
     '''
+    logging.info('Using dataset: %s', args.dataset)
+    logging.info('Loading data parser: %s' % args.parser)
     parser = import_module('src.parsers.%s' % args.parser)
     data_loader = parser.DataLoader(
         dataset_dir='datasets/%s' % args.dataset,
@@ -28,6 +30,7 @@ def test(args): # DO NOT EDIT THIS LINE
     '''
     Load the network and the saved weights
     '''
+    logging.info('Loading CNN model: %s' % args.model)
     model_src = import_module('src.models.%s' % args.model)
     convnet = model_src.Model(sentence_len=data_loader.sentence_len)
 
@@ -42,17 +45,26 @@ def test(args): # DO NOT EDIT THIS LINE
     '''
     pass the data through the network
     '''
+    test_start_time = time.time()
     run_tests(convnet=convnet, data_loader=data_loader,
               use_cuda=args.cuda)
+    test_start_time = time.time()
+    logging.info('Total testing time: %f', test_end_time - test_start_time)
 
 '''
 Run the tests on the test samples
 '''
 def run_tests(convnet, data_loader,
               batch_size=100, use_cuda=False):
+    logging.info('Testing: batch_size=%d', batch_size)
+    logging.warn('Using CUDA? %s', 'YES' if use_cuda else 'NO')
 
     data_iter = iter(data_loader)
     num_batches = 1 + (len(data_loader) - 1) / batch_size
+    logging.debug('#batches = %d', num_batches)
+
+    if use_cuda:
+        convnet.cuda()
 
     actual, predicted = np.array([]), np.array([])
     freq = [0,0]
@@ -75,7 +87,7 @@ def run_tests(convnet, data_loader,
         output = convnet.forward(batch_X)
 
         _, pred = output.max(1)
-        predicted = np.append(predicted, [pred.data.numpy()])
+        predicted = np.append(predicted, [pred.data.cpu().numpy()])
         actual = np.append(actual, [batch_Y])
 
         # debug
