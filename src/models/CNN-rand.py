@@ -16,6 +16,9 @@ class Model(nn.Module):
         super(Model, self).__init__()
         self.n_classes = n_classes
 
+        vocab_size = dl_args['vocab_size']
+        self.embedding = nn.Embedding(vocab_size, wordvec_dim)
+
         # Convolution layer and max pooling
         self.convs = []
         self.maxpools = []
@@ -48,6 +51,7 @@ class Model(nn.Module):
         # x: N * W * D
         # N = batch size, W = no of words, D = wordvec dimension
         # NF = num filters, Ff = num per filter, Fs = filter size
+        x = self.embedding(x.long())
 
         max_x = []
         for i in range(len(self.convs)):

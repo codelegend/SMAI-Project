@@ -36,7 +36,7 @@ def train(args): # DO NOT EDIT THIS LINE
     logging.info('Loading CNN model: %s' % args.model)
     model_src = import_module('src.models.%s' % args.model)
     convnet = model_src.Model(sentence_len=args.sentence_len,
-        wordvec_dim=args.wordvec_dim)
+        wordvec_dim=args.wordvec_dim, dl_args=data_loader.args_to_nn)
 
     # continue from checkpoint?
     if args.load_from is not None:

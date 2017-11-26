@@ -95,6 +95,7 @@ class DataLoader(object):
     def __init__(self, dataset_dir, wordvec_file,
                 mode='train', partial_dataset=False, shuffle=False,
                 sentence_len=10, wordvec_dim=100, cached=False):
+        self.args_to_nn = None
         # load sentences
         self.sentences = SentenceLoader(dataset_dir,
                                         with_label=True, full_feature=True,
