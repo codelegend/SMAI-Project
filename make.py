@@ -87,7 +87,7 @@ def parse_args(args=None):
         help='Load weights from file (checkpoint)')
     parser_test.add_argument('--wordvec', default=None,
         help='Load word vectors from file')
-    parser_test.add_argument('--mode-alias', default='test',
+    parser_test.add_argument('--mode-alias', dest='mode', default='test',
         help='An alias for the test mode.')
 
     # parse
