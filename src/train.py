@@ -35,7 +35,8 @@ def train(args): # DO NOT EDIT THIS LINE
     '''
     logging.info('Loading CNN model: %s' % args.model)
     model_src = import_module('src.models.%s' % args.model)
-    convnet = model_src.Model(sentence_len=data_loader.sentence_len)
+    convnet = model_src.Model(sentence_len=args.sentence_len,
+        wordvec_dim=args.wordvec_dim)
 
     # continue from checkpoint?
     if args.load_from is not None:
@@ -70,7 +71,7 @@ def train_model(convnet, data_loader, epochs,
 
     # Loss function and optimizer for the learning
     loss_func = torch.nn.CrossEntropyLoss()
-    optimizer = optim.Adadelta(convnet.parameters(), lr=0.001, weight_decay=3)
+    optimizer = optim.Adadelta(convnet.parameters(), lr=0.001)
 
     if use_cuda:
         convnet = convnet.cuda()
