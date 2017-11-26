@@ -11,7 +11,7 @@ def setup_logging(args):
         if args.task == 'preprocess':
             log_file += args.parser
         else:
-            log_file += args.model
+            log_file += args.model + '.' + args.dataset
         log_file += '.log'
         config['handlers']['file_handler']['filename'] = log_file
     logging.config.dictConfig(config)

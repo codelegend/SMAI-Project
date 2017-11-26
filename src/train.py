@@ -70,7 +70,8 @@ def train_model(convnet, data_loader, epochs,
 
     # Loss function and optimizer for the learning
     loss_func = torch.nn.CrossEntropyLoss()
-    optimizer = optim.Adam(convnet.parameters(), lr=0.001)
+    optimizer = optim.Adadelta(convnet.parameters(), lr=0.001, weight_decay=3)
+
     if use_cuda:
         convnet = convnet.cuda()
         loss_func = loss_func.cuda()
