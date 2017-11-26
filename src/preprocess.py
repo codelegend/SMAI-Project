@@ -1,8 +1,6 @@
-# TODO: everything...
 import sys, os, logging
 from importlib import import_module
 import gensim
-workers = 4 ### number of workers for gensim
 
 '''
 Preprocessing:
@@ -10,28 +8,33 @@ Preprocessing:
 @arg parser_name Use parser src/parsers/@parser_name
 @arg output_dir Save word vectors to `var/wordvec/@output_dir`
 '''
-def learn_word_vectors(dataset, parser_name, output_dir): # DO NOT EDIT THIS LINE
-    if not os.path.isdir(output_dir):
-        os.mkdir(output_dir)
+def preprocess(args):
+    # load the parser and dataset
+    logging.info('Using Parser %s', args.parser)
+    parser = import_module('src.parsers.%s' % args.parser)
 
-    parser = import_module('src.parsers.%s' % parser_name)
-    sentences = parser.SentenceLoader(dataset_dir='datasets/%s' % dataset, partial_dataset=False)
+    logging.info('Loading Dataset: %s', args.dataset)
+    if args.partial_dataset: logging.debug('* using only partial dataset *')
+    sentences = parser.SentenceLoader(dataset_dir='datasets/%s' % args.dataset,
+                                      partial_dataset=args.partial_dataset)
 
-    model = gensim.models.Word2Vec(sentences, min_count=5, size=100, workers=workers)
-    # f=open("temp_output.txt","w")
-    # for key in model.wv.vocab:
-    #     f.write(key+'\n')
-    # f.close()
+    # learn the word vectors
+    model = gensim.models.Word2Vec(sentences,
+        min_count=args.min_count, size=args.wordvec_dim,
+        workers=args.workers, iter=args.num_iter)
 
-    save_file = 'model_%d.gensim' % get_next_unused_id(output_dir)
-    model.save(os.path.join(output_dir, save_file))
+    # save the word vectors
+    output_dir = 'var/wordvec/' + args.dataset
+    if not os.path.isdir(output_dir): os.mkdir(output_dir)
+    output_file = os.path.join(output_dir, args.output + '.wv')
+    model.save(output_file)
 
-def get_next_unused_id(output_dir):
-    files = os.listdir(output_dir)
-    files = map(lambda f: int(f.replace('model_', '').replace('.gensim', '')), files)
-    files.sort()
-    file_id = 1
-    for i in files:
-        if file_id == i:
-            file_id += 1
-    return file_id
+    # save vocab
+    if args.save_vocab is not None:
+        vocab_file = os.path.join(output_dir, args.save_vocab + '.vocab')
+        logging.info('Saving vocabulary to %s', vocab_file)
+        with open(vocab_file, 'w') as f:
+            for key in model.wv.vocab:
+                f.write(key + '\n')
+
+    logging.info('Word Vectors generated!')
