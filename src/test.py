@@ -36,7 +36,8 @@ def test(args): # DO NOT EDIT THIS LINE
     '''
     logging.info('Loading CNN model: %s' % args.model)
     model_src = import_module('src.models.%s' % args.model)
-    convnet = model_src.Model(sentence_len=data_loader.sentence_len)
+    convnet = model_src.Model(sentence_len=data_loader.sentence_len,
+        wordvec_dim=args.wordvec_dim, dl_args=data_loader.args_to_nn)
 
     weights_dir = 'var/train/%s.%s' % (args.model, args.dataset)
     if args.load_from is None:
