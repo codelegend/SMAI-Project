@@ -16,8 +16,8 @@ class Model(nn.Module):
         super(Model, self).__init__()
         self.n_classes = n_classes
 
-        vocab_size = dl_args['vocab_size']
-        self.embedding = nn.Embedding(vocab_size, wordvec_dim)
+        self.vocab_size = dl_args['vocab_size']
+        self.embedding = nn.Embedding(self.vocab_size, wordvec_dim)
 
         # Convolution layer and max pooling
         self.convs = []
@@ -74,7 +74,6 @@ class Model(nn.Module):
         return reduce(lambda a, b: a * b, x.size()[1:])
 
 helpstr = '''(Version 1.0)
-Example model CNN
-@input: any Tensor
-@returns: @input tensor
+CNN-rand
+randomly initialise the word vectors, and learn them also.
 '''

@@ -31,6 +31,8 @@ class DataLoader(object):
             idx += 1
         self.vocab_size = idx
         self.args_to_nn['vocab_size'] = self.vocab_size
+        self.args_to_nn['vocab_indices'] = self.vocab
+        self.args_to_nn['pre_trained'] = word_vectors
 
         # config
         self.sentence_len = sentence_len

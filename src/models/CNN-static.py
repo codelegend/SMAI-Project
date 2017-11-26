@@ -70,7 +70,6 @@ class Model(nn.Module):
         return reduce(lambda a, b: a * b, x.size()[1:])
 
 helpstr = '''(Version 1.0)
-Example model CNN
-@input: any Tensor
-@returns: @input tensor
+CNN-static
+Uses pre-trained word vectors
 '''
