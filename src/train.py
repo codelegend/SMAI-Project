@@ -71,7 +71,10 @@ def train_model(convnet, data_loader, epochs,
 
     # Loss function and optimizer for the learning
     loss_func = torch.nn.CrossEntropyLoss()
-    optimizer = optim.Adadelta(convnet.parameters(), lr=0.001)
+    learning_rate = 1.0
+    decay_rate = 0.8
+    decay_interval = 10
+    optimizer = optim.Adadelta(convnet.parameters(), lr=learning_rate)
 
     if use_cuda:
         convnet = convnet.cuda()
@@ -150,6 +153,11 @@ def train_model(convnet, data_loader, epochs,
         logging.info('> data load time = %.3f', epoch_data_load_time)
         total_data_load_time += epoch_data_load_time
         logging.info('> Loss = %f', epoch_loss / num_batches)
+
+        # decay learning rate
+        if (epoch + 1) % decay_interval == 0:
+            learning_rate *= decay_rate
+            optimizer = optim.Adadelta(convnet.parameters(), lr=learning_rate)
 
     # save final trained weights
     logging.info('Saving final weights')
