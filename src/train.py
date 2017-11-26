@@ -18,14 +18,17 @@ def train(args): # DO NOT EDIT THIS LINE
     load the dataset
     '''
     logging.info('Using dataset: %s', args.dataset)
+    args.wordvec = 'var/wordvec/%s/%s' % (args.dataset, args.wordvec)
+    logging.info('Loading word vectors: %s', args.wordvec)
     logging.info('Loading data parser: %s' % args.parser)
     parser = import_module('src.parsers.%s' % args.parser)
     data_loader = parser.DataLoader(
         dataset_dir='datasets/%s/' % args.dataset,
-        wordvec_dir='var/wordvec/%s/' % args.dataset,
-        partial_dataset=False,
+        wordvec_file=args.wordvec,
+        partial_dataset=args.partial_dataset,
         shuffle=True,
-        sentence_len=20)
+        sentence_len=args.sentence_len,
+        cached=args.cache)
 
     '''
     Load the model, and setup cuda, if needed
@@ -34,16 +37,23 @@ def train(args): # DO NOT EDIT THIS LINE
     model_src = import_module('src.models.%s' % args.model)
     convnet = model_src.Model(sentence_len=data_loader.sentence_len)
 
+    # continue from checkpoint?
+    if args.load_from is not None:
+        weights_file = 'var/train/%s.%s/%s.pt' % (args.model, args.dataset, args.load_from)
+        logging.info('Loading weights from %s', weights_file)
+        state_checkpoint = torch.load(weights_file)
+        convnet.load_state_dict(state_checkpoint)
+
     '''
     Train the model
     '''
     train_start_time = time.time()
     train_model(convnet=convnet,
                 data_loader=data_loader,
-                epochs=100, use_cuda=args.cuda,
-                batch_size=100,
+                epochs=args.epochs, use_cuda=args.cuda,
+                batch_size=args.batch_size,
                 train_dir='var/train/%s.%s/' % (args.model, args.dataset),
-                output_file_name=args.output)
+                job_name=args.job_name)
     train_end_time = time.time()
     logging.info('Total training time: %f', train_end_time - train_start_time)
 
@@ -52,7 +62,7 @@ Trains the CNN, with multiple epochs
 '''
 def train_model(convnet, data_loader, epochs=100,
                 batch_size=100, shuffle=False, use_cuda=False,
-                train_dir='var/train', output_file_name='learn'):
+                train_dir='var/train', job_name='learn'):
     logging.info('Learning: epochs=%d, batch_size=%d', epochs, batch_size)
     logging.warn('Using CUDA? %s', 'YES' if use_cuda else 'NO')
 
@@ -69,8 +79,11 @@ def train_model(convnet, data_loader, epochs=100,
     num_batches = 1 + (len(data_loader) - 1) / batch_size
     logging.debug('#batches = %d', num_batches)
 
+    total_data_load_time = 0
+
     for epoch in xrange(epochs):
         epoch_start_time = time.time()
+        epoch_data_load_time = 0
 
         epoch_loss = 0
 
@@ -78,6 +91,7 @@ def train_model(convnet, data_loader, epochs=100,
 
         for batch_id in xrange(num_batches):
             # load current batch
+            batch_load_start = time.time()
             batch_X, batch_Y = [], []
             try:
                 for i in xrange(batch_size):
@@ -86,6 +100,8 @@ def train_model(convnet, data_loader, epochs=100,
                     batch_Y.append(label)
             except StopIteration:
                 pass
+            batch_load_end = time.time()
+            epoch_data_load_time += batch_load_end - batch_load_start
 
             # make the batch feature variable
             batch_X = torch.FloatTensor(batch_X)
@@ -122,13 +138,18 @@ def train_model(convnet, data_loader, epochs=100,
         # save weights
         if (epoch + 1) % 10 == 0:
             logging.info('Saving weights at epoch %d', epoch + 1)
-            save_file = os.path.join(train_dir, '%s_backup_%d.pt' % (output_file_name, (epoch + 1) / 10))
+            save_file = os.path.join(train_dir, '%s_backup_%d.pt' % (job_name, (epoch + 1) / 10))
             torch.save(convnet.state_dict(), save_file)
 
         ### log epoch execution statistics
         logging.info('Epoch %d: time = %.3f', epoch, epoch_end_time - epoch_start_time)
+        logging.info('> data load time = %.3f', epoch_data_load_time)
+        total_data_load_time += epoch_data_load_time
         logging.info('> Loss = %f', epoch_loss / num_batches)
 
     # save final trained weights
-    save_file = os.path.join(train_dir, '%s_final.pt' % output_file_name)
+    logging.info('Saving final weights')
+    save_file = os.path.join(train_dir, '%s_final.pt' % job_name)
     torch.save(convnet.state_dict(), save_file)
+
+    logging.info('> Total data load time = %.3f', total_data_load_time)

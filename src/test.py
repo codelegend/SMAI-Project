@@ -18,12 +18,16 @@ def test(args): # DO NOT EDIT THIS LINE
     '''
     logging.info('Using dataset: %s', args.dataset)
     logging.info('Loading data parser: %s' % args.parser)
+    args.wordvec = 'var/wordvec/%s/%s' % (args.dataset, args.wordvec)
+    logging.info('Loading word vectors from: %s', args.wordvec)
+
     parser = import_module('src.parsers.%s' % args.parser)
     data_loader = parser.DataLoader(
         dataset_dir='datasets/%s' % args.dataset,
-        wordvec_dir='var/wordvec/%s/' % args.dataset,
+        wordvec_file=args.wordvec,
         partial_dataset=False,
-        sentence_len=20,
+        sentence_len=args.sentence_len,
+        wordvec_dim=wordvec_dim,
         mode='test',
         shuffle=False)
 
@@ -48,7 +52,7 @@ def test(args): # DO NOT EDIT THIS LINE
     test_start_time = time.time()
     run_tests(convnet=convnet, data_loader=data_loader,
               use_cuda=args.cuda)
-    test_start_time = time.time()
+    test_end_time = time.time()
     logging.info('Total testing time: %f', test_end_time - test_start_time)
 
 '''
