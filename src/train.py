@@ -1,11 +1,10 @@
-import sys, time, logging
+import sys, time, os, logging
 import numpy as np
 import torch
 from torch import autograd
 import torch.nn.functional as F
 import torch.optim as optim
 from importlib import import_module
-
 
 '''
 Training:
@@ -18,44 +17,60 @@ def train(args): # DO NOT EDIT THIS LINE
     '''
     load the dataset
     '''
+    logging.info('Using dataset: %s', args.dataset)
+    logging.info('Loading data parser: %s' % args.parser)
     parser = import_module('src.parsers.%s' % args.parser)
     data_loader = parser.DataLoader(
-        dataset_dir='datasets/%s' % args.dataset,
+        dataset_dir='datasets/%s/' % args.dataset,
         wordvec_dir='var/wordvec/%s/' % args.dataset,
         partial_dataset=False,
+        shuffle=True,
         sentence_len=20)
 
     '''
     Load the model, and setup cuda, if needed
     '''
+    logging.info('Loading CNN model: %s' % args.model)
     model_src = import_module('src.models.%s' % args.model)
     convnet = model_src.Model(sentence_len=data_loader.sentence_len)
 
     '''
     Train the model
     '''
+    train_start_time = time.time()
     train_model(convnet=convnet,
                 data_loader=data_loader,
                 epochs=100, use_cuda=args.cuda,
-                batch_size=100)
+                batch_size=100,
+                train_dir='var/train/%s.%s/' % (args.model, args.dataset),
+                output_file_name=args.output)
+    train_end_time = time.time()
+    logging.info('Total training time: %f', train_end_time - train_start_time)
 
 '''
 Trains the CNN, with multiple epochs
-
 '''
 def train_model(convnet, data_loader, epochs=100,
-                batch_size=100, shuffle=False, use_cuda=False):
+                batch_size=100, shuffle=False, use_cuda=False,
+                train_dir='var/train', output_file_name='learn'):
+    logging.info('Learning: epochs=%d, batch_size=%d', epochs, batch_size)
+    logging.warn('Using CUDA? %s', 'YES' if use_cuda else 'NO')
+
     # Loss function and optimizer for the learning
     loss_func = torch.nn.CrossEntropyLoss()
     optimizer = optim.Adam(convnet.parameters(), lr=0.001)
     if use_cuda:
         convnet = convnet.cuda()
-        loss = loss.cuda()
+        loss_func = loss_func.cuda()
+
+    # check directory for saving train weights
+    if not os.path.isdir(train_dir): os.mkdir(train_dir)
 
     num_batches = 1 + (len(data_loader) - 1) / batch_size
+    logging.debug('#batches = %d', num_batches)
 
     for epoch in xrange(epochs):
-        start_time = time.time()
+        epoch_start_time = time.time()
 
         epoch_loss = 0
 
@@ -69,7 +84,6 @@ def train_model(convnet, data_loader, epochs=100,
                     feature, label = data_iter.next()
                     batch_X.append(feature)
                     batch_Y.append(label)
-
             except StopIteration:
                 pass
 
@@ -100,12 +114,21 @@ def train_model(convnet, data_loader, epochs=100,
                 logging.debug('Batch %d: loss = %f', batch_id, epoch_loss / batch_id)
 
             # cleanup
-            del batch_X, batch_Y, output, loss
+            del batch_X, batch_Y
+            del output, loss
 
+        epoch_end_time = time.time()
 
-
-        end_time = time.time()
+        # save weights
+        if (epoch + 1) % 10 == 0:
+            logging.info('Saving weights at epoch %d', epoch + 1)
+            save_file = os.path.join(train_dir, '%s_backup_%d.pt' % (output_file_name, (epoch + 1) / 10))
+            torch.save(convnet.state_dict(), save_file)
 
         ### log epoch execution statistics
-        logging.info('Epoch %d: time = %.3f', epoch, end_time - start_time)
+        logging.info('Epoch %d: time = %.3f', epoch, epoch_end_time - epoch_start_time)
         logging.info('> Loss = %f', epoch_loss / num_batches)
+
+    # save final trained weights
+    save_file = os.path.join(train_dir, '%s_final.pt' % output_file_name)
+    torch.save(convnet.state_dict(), save_file)

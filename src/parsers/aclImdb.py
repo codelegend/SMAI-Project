@@ -87,7 +87,9 @@ class DataLoader(object):
         self.sentences = SentenceLoader(dataset_dir,
                                         with_label=True,
                                         full_feature=True,
-                                        partial_dataset=partial_dataset, shuffle=shuffle)
+                                        partial_dataset=partial_dataset,
+                                        shuffle=shuffle,
+                                        mode=mode)
 
         # load the word vectors
         if wordvec_file is None:
