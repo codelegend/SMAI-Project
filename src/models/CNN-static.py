@@ -25,7 +25,7 @@ class Model(nn.Module):
                 nn.Conv2d(1, num_filters, (filter_width, wordvec_dim))
             )
             self.maxpools.append(
-                nn.MaxPool2d((sentence_len - filter_width + 1, 1))
+                nn.MaxPool1d(sentence_len - filter_width + 1)
             )
             fc_size += num_filters
 
@@ -44,19 +44,22 @@ class Model(nn.Module):
         '''
         Pass x through the CNN
         '''
+        # x: N * W * D
+        # N = batch size, W = no of words, D = wordvec dimension
+        # NF = num filters, Ff = num per filter, Fs = filter size
+
         max_x = []
         for i in range(len(self.convs)):
             curr = x
-            curr_shape = curr.data.shape
-            curr = curr.view(curr_shape[0], 1, curr_shape[1], curr_shape[2])
+            curr = x.unsqueeze(1)
             curr = self.convs[i](curr)
-            curr = self.maxpools[i](curr)
-            curr = F.relu(curr)
+            curr = F.relu(curr).squeeze(3)
+            curr = self.maxpools[i](curr).squeeze(2)
             max_x.append(curr)
         x = torch.cat(max_x, 1)
 
         x = x.view(x.size(0), -1) # make it a single row
-        x = self.FC1(x)
+        # x = self.FC1(x)
         x = self.dropout1(x)
         x = self.layer(x)
         # x = F.softmax(x)

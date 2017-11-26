@@ -62,7 +62,7 @@ def train(args): # DO NOT EDIT THIS LINE
 Trains the CNN, with multiple epochs
 '''
 def train_model(convnet, data_loader, epochs,
-                batch_size, shuffle, use_cuda,
+                batch_size, use_cuda,
                 train_dir, job_name,
                 log_interval=10):
     logging.info('Learning: epochs=%d, batch_size=%d', epochs, batch_size)
@@ -129,7 +129,7 @@ def train_model(convnet, data_loader, epochs,
 
             # logging
             if (batch_id + 1) % log_interval == 0:
-                logging.debug('Batch %d: loss = %f', batch_id, epoch_loss / batch_id)
+                logging.debug('Batch %d: loss = %f', batch_id + 1, epoch_loss / batch_id)
 
             # cleanup
             del batch_X, batch_Y
