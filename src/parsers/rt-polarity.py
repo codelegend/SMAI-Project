@@ -5,7 +5,8 @@ import re
 
 # **DO NOT CHANGE THE CLASS NAME**
 class SentenceLoader(object):
-    def __init__(self, dataset_dir, with_label=False, full_feature=False, partial_dataset=False, mode='train', shuffle=False):
+    def __init__(self, dataset_dir, with_label=False, full_feature=False, 
+                 partial_dataset=False, mode='train', shuffle=False, cached=False):
         '''Args for __iter__
         @with_label: return [feature, label] (as array)
         @full_feature: return full feature
@@ -52,9 +53,9 @@ class SentenceLoader(object):
 
 # **DO NOT CHANGE THE CLASS NAME**
 class DataLoader(object):
-    def __init__(self, dataset_dir, wordvec_dir, wordvec_file=None,
+    def __init__(self, dataset_dir, wordvec_file,
                 mode='train', partial_dataset=False, shuffle=False,
-                sentence_len=10, wordvec_dim=100):
+                sentence_len=10, wordvec_dim=100, cached=False):
         # load sentences
         self.sentences = SentenceLoader(dataset_dir,
                                         with_label=True,
@@ -63,11 +64,6 @@ class DataLoader(object):
                                         shuffle=shuffle)
 
         # load the word vectors
-        if wordvec_file is None:
-            files = os.listdir(wordvec_dir)
-            files.sort()
-            wordvec_file = files[-1]
-        wordvec_file = os.path.join(wordvec_dir, wordvec_file)
         model = gensim.models.Word2Vec.load(wordvec_file)
         self.word_vectors = model.wv # no updates
         del model

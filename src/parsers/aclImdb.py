@@ -103,7 +103,6 @@ class DataLoader(object):
                                         cached=cached)
 
         # load the word vectors
-        wordvec_file = wordvec_file
         model = gensim.models.Word2Vec.load(wordvec_file)
         self.word_vectors = model.wv # no updates
         del model
