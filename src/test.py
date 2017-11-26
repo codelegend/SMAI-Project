@@ -28,7 +28,7 @@ def test(args): # DO NOT EDIT THIS LINE
         partial_dataset=False,
         sentence_len=args.sentence_len,
         wordvec_dim=args.wordvec_dim,
-        mode='test',
+        mode=args.mode,
         shuffle=False)
 
     '''
