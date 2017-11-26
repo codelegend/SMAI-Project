@@ -40,6 +40,8 @@ def parse_args(args=None):
         help='Data parser to use (stored in src/parsers/PARSER.py)')
     common_args.add_argument('--no-cuda', dest='cuda', action='store_false',
         help='Do not use CUDA even if available')
+    common_args.add_argument('--log-interval', type=int, default=10,
+        help='Interval for logging')
 
     common_config = common_parser.add_argument_group('Data Config')
     common_config.add_argument('--sentence-len', type=int, default=20,

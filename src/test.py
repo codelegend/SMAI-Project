@@ -51,7 +51,7 @@ def test(args): # DO NOT EDIT THIS LINE
     '''
     test_start_time = time.time()
     run_tests(convnet=convnet, data_loader=data_loader,
-              use_cuda=args.cuda)
+              use_cuda=args.cuda, log_interval=args.log_interval)
     test_end_time = time.time()
     logging.info('Total testing time: %f', test_end_time - test_start_time)
 
@@ -59,7 +59,7 @@ def test(args): # DO NOT EDIT THIS LINE
 Run the tests on the test samples
 '''
 def run_tests(convnet, data_loader,
-              batch_size=100, use_cuda=False):
+              batch_size, use_cuda, log_interval):
     logging.info('Testing: batch_size=%d', batch_size)
     logging.warn('Using CUDA? %s', 'YES' if use_cuda else 'NO')
 
@@ -98,7 +98,7 @@ def run_tests(convnet, data_loader,
         freq[0] += batch_Y[batch_Y == 0].shape[0]
         freq[1] += batch_Y[batch_Y == 1].shape[0]
 
-        if (batch_id + 1) % 10 == 0:
+        if (batch_id + 1) % log_interval == 0:
             logging.debug('Batch %d done', batch_id+1)
             logging.debug('> pos = %d, neg = %d', freq[1], freq[0])
             freq[0] = 0

@@ -53,16 +53,18 @@ def train(args): # DO NOT EDIT THIS LINE
                 epochs=args.epochs, use_cuda=args.cuda,
                 batch_size=args.batch_size,
                 train_dir='var/train/%s.%s/' % (args.model, args.dataset),
-                job_name=args.job_name)
+                job_name=args.job_name,
+                log_interval=args.log_interval)
     train_end_time = time.time()
     logging.info('Total training time: %f', train_end_time - train_start_time)
 
 '''
 Trains the CNN, with multiple epochs
 '''
-def train_model(convnet, data_loader, epochs=100,
-                batch_size=100, shuffle=False, use_cuda=False,
-                train_dir='var/train', job_name='learn'):
+def train_model(convnet, data_loader, epochs,
+                batch_size, shuffle, use_cuda,
+                train_dir, job_name,
+                log_interval=10):
     logging.info('Learning: epochs=%d, batch_size=%d', epochs, batch_size)
     logging.warn('Using CUDA? %s', 'YES' if use_cuda else 'NO')
 
@@ -126,7 +128,7 @@ def train_model(convnet, data_loader, epochs=100,
             epoch_loss += loss.data[0]
 
             # logging
-            if batch_id % 10 == 1:
+            if (batch_id + 1) % log_interval == 0:
                 logging.debug('Batch %d: loss = %f', batch_id, epoch_loss / batch_id)
 
             # cleanup
@@ -136,9 +138,9 @@ def train_model(convnet, data_loader, epochs=100,
         epoch_end_time = time.time()
 
         # save weights
-        if (epoch + 1) % 10 == 0:
+        if (epoch + 1) % log_interval == 0:
             logging.info('Saving weights at epoch %d', epoch + 1)
-            save_file = os.path.join(train_dir, '%s_backup_%d.pt' % (job_name, (epoch + 1) / 10))
+            save_file = os.path.join(train_dir, '%s_backup_%d.pt' % (job_name, (epoch + 1) / log_interval))
             torch.save(convnet.state_dict(), save_file)
 
         ### log epoch execution statistics
