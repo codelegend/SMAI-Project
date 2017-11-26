@@ -18,7 +18,7 @@ def test(args): # DO NOT EDIT THIS LINE
     '''
     logging.info('Using dataset: %s', args.dataset)
     logging.info('Loading data parser: %s' % args.parser)
-    args.wordvec = 'var/wordvec/%s/%s' % (args.dataset, args.wordvec)
+    args.wordvec = 'var/wordvec/%s/%s.wv' % (args.dataset, args.wordvec)
     logging.info('Loading word vectors from: %s', args.wordvec)
 
     parser = import_module('src.parsers.%s' % args.parser)
@@ -27,7 +27,7 @@ def test(args): # DO NOT EDIT THIS LINE
         wordvec_file=args.wordvec,
         partial_dataset=False,
         sentence_len=args.sentence_len,
-        wordvec_dim=wordvec_dim,
+        wordvec_dim=args.wordvec_dim,
         mode='test',
         shuffle=False)
 

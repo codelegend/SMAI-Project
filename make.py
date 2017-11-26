@@ -66,8 +66,7 @@ def parse_args(args=None):
     parser_train = subparsers.add_parser('train', help='Train the CNN', parents=[common_parser], formatter_class=ADHF)
     parser_train.add_argument('job_name',
         help='Name of the job. Used for logging/checkpointing.')
-    parser_train.add_argument('--epochs',
-        default=100,
+    parser_train.add_argument('--epochs', type=int, default=100,
         help='Number of epochs to run')
     parser_train.add_argument('--batch-size', default=100,
         help='Mini-batch size for the CNN')

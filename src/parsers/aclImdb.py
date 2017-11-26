@@ -37,7 +37,8 @@ class SentenceLoader(object):
         # load all files at one go
         self.cache = dict()
         if cached:
-            for fname, label in dataset:
+            self.cached = False
+            for fname, label in self.dataset_files:
                 self.cache[fname] = self.read_file(fname, label)
         self.cached = cached
 
