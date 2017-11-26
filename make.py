@@ -24,7 +24,7 @@ def check_directory_structure():
             os.mkdir(d)
 
 
-def parse_args():
+def parse_args(args=None):
     ADHF = argparse.ArgumentDefaultsHelpFormatter
     parser = argparse.ArgumentParser(description='Sentence Classification', formatter_class=ADHF)
     subparsers = parser.add_subparsers(title='Tasks', dest='task')
@@ -64,7 +64,7 @@ def parse_args():
 
     # Train: train the CNN
     parser_train = subparsers.add_parser('train', help='Train the CNN', parents=[common_parser], formatter_class=ADHF)
-    parser_train.add_argument('job-name',
+    parser_train.add_argument('job_name',
         help='Name of the job. Used for logging/checkpointing.')
     parser_train.add_argument('--epochs',
         default=100,
@@ -75,7 +75,8 @@ def parse_args():
         help='Load the entire dataset to memory (use with caution)')
     parser_train.add_argument('--load-from', default=None,
         help='Load weights from file (checkpoint)')
-
+    parser_train.add_argument('--wordvec', default=None,
+        help='Load word vectors from file')
 
     # Test: test the CNN
     parser_test = subparsers.add_parser('test', help='Use the CNN', parents=[common_parser], formatter_class=ADHF)
@@ -83,13 +84,24 @@ def parse_args():
         help='Mini-batch size for the CNN')
     parser_test.add_argument('--load-from', default=None,
         help='Load weights from file (checkpoint)')
+    parser_test.add_argument('--wordvec', default=None,
+        help='Load word vectors from file')
 
     # parse
-    return parser.parse_args()
+    return parser.parse_args(args)
 
 def main():
     check_directory_structure()
-    args = parse_args()
+    if len(sys.argv) >= 3 and sys.argv[1] == '--config':
+        # load from file
+        with open(sys.argv[2]) as f:
+            lines = map(lambda line: line.strip().split(), f.readlines())
+            args = []
+            for line in lines: args.extend(line)
+        args = parse_args(args)
+    else:
+        args = parse_args()
+    print args
     setup_logging(args)
 
     if args.cuda:
@@ -102,13 +114,18 @@ def main():
         cudnn.benchmark = True
         logging.info("Using CUDA.")
 
-    if args.task == 'preprocess':
-        import_module('src.preprocess').preprocess(args)
-    elif args.task == 'train':
-        import_module('src.train').train(args)
-    elif args.task == 'test':
-        import_module('src.test').test(args)
-
+    try:
+        if args.task == 'preprocess':
+            import_module('src.preprocess').preprocess(args)
+        elif args.task == 'train':
+            import_module('src.train').train(args)
+        elif args.task == 'test':
+            import_module('src.test').test(args)
+    except KeyboardInterrupt:
+        logging.warn('Force quit!')
+        pass
+    except:
+        raise
     logging.info('Exiting...\n%s', '-' * 80)
 
 main()

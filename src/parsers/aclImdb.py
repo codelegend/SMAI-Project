@@ -5,11 +5,10 @@ import re
 
 # **DO NOT CHANGE THE CLASS NAME**
 class SentenceLoader(object):
-    def __init__(self, dataset_dir, with_label=False, full_feature=False, partial_dataset=False, mode='train', shuffle=False):
-        '''Args for __iter__
-        @with_label: return [feature, label] (as array)
-        @full_feature: return full feature
-        '''
+    def __init__(self, dataset_dir,
+                 with_label=False, full_feature=False,
+                 partial_dataset=False, mode='train',
+                 shuffle=False, cached=False):
         self.with_label = with_label
         self.full_feature = full_feature
 
@@ -33,7 +32,14 @@ class SentenceLoader(object):
 
         # truncate if partial_dataset
         if partial_dataset:
-            self.dataset_files = self.dataset_files[:10]
+            self.dataset_files = self.dataset_files[:20]
+
+        # load all files at one go
+        self.cache = dict()
+        if cached:
+            for fname, label in dataset:
+                self.cache[fname] = self.read_file(fname, label)
+        self.cached = cached
 
         # config
         self.shuffle = shuffle
@@ -41,26 +47,31 @@ class SentenceLoader(object):
 
     # returns a processed sentence/feature, as per the config.
     def __iter__(self):
-        dataset = copy.copy(self.dataset_files)
         if self.shuffle:
-            np.random.shuffle(dataset)
+            np.random.shuffle(self.dataset_files)
 
-        for fname, label in dataset:
-            with open(fname) as f:
-                content = f.read().strip()
-                content = self.process_line(content)
-                if self.full_feature:
-                    content_temp = []
-                    for c in content: content_temp.extend(c)
-                    content = [content_temp]
-                if self.with_label:
-                    content = map(lambda line: (line, label), content)
-
-                for line in content:
-                    yield line
+        for fname, label in self.dataset_files:
+            for line in self.read_file(fname, label):
+                yield line
 
     def __len__(self):
         return len(self.dataset_files)
+
+    def read_file(self, fname, label):
+        if self.cached:
+            return self.cache[fname]
+
+        content = None
+        with open(fname) as f:
+            content = f.read().strip()
+            content = self.process_line(content)
+            if self.full_feature:
+                content_temp = []
+                for c in content: content_temp.extend(c)
+                content = [content_temp]
+            if self.with_label:
+                content = map(lambda line: (line, label), content)
+        return content
 
     # return the lines after splitting into words, and filtering.
     def process_line(self, content):
@@ -80,23 +91,18 @@ class SentenceLoader(object):
 
 # **DO NOT CHANGE THE CLASS NAME**
 class DataLoader(object):
-    def __init__(self, dataset_dir, wordvec_dir, wordvec_file=None,
+    def __init__(self, dataset_dir, wordvec_file,
                 mode='train', partial_dataset=False, shuffle=False,
-                sentence_len=10, wordvec_dim=100):
+                sentence_len=10, wordvec_dim=100, cached=False):
         # load sentences
         self.sentences = SentenceLoader(dataset_dir,
-                                        with_label=True,
-                                        full_feature=True,
+                                        with_label=True, full_feature=True,
                                         partial_dataset=partial_dataset,
-                                        shuffle=shuffle,
-                                        mode=mode)
+                                        shuffle=shuffle, mode=mode,
+                                        cached=cached)
 
         # load the word vectors
-        if wordvec_file is None:
-            files = os.listdir(wordvec_dir)
-            files.sort()
-            wordvec_file = files[-1]
-        wordvec_file = os.path.join(wordvec_dir, wordvec_file)
+        wordvec_file = wordvec_file
         model = gensim.models.Word2Vec.load(wordvec_file)
         self.word_vectors = model.wv # no updates
         del model
