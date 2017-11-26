@@ -40,6 +40,12 @@ class Model(nn.Module):
         self.layer = nn.Linear(layer_sizes[1], 2)
 
         # random-initialization
+        for module in self.modules():
+            if isinstance(module, nn.Conv2d):
+                n = module.kernel_size[0] * module.kernel_size[1] * module.out_channels
+                module.weight.data.normal_(0, (2. / n) ** .5)
+
+
 
     def forward(self, x):
         '''
