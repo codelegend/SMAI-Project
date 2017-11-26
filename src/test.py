@@ -43,7 +43,10 @@ def test(args): # DO NOT EDIT THIS LINE
         args.load_from = os.listdir(weights_dir)[0]
     weights_file = '%s/%s.pt' % (weights_dir, args.load_from)
     logging.info('Loading weights from %s', weights_file)
-    state_checkpoint = torch.load(weights_file)
+    if args.cuda:
+        state_checkpoint = torch.load(weights_file)
+    else:
+        state_checkpoint = torch.load(weights_file, map_location=lambda storage, loc: storage)
     convnet.load_state_dict(state_checkpoint)
 
     '''
