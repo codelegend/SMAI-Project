@@ -18,7 +18,7 @@ def train(args): # DO NOT EDIT THIS LINE
     load the dataset
     '''
     logging.info('Using dataset: %s', args.dataset)
-    args.wordvec = 'var/wordvec/%s/%s' % (args.dataset, args.wordvec)
+    args.wordvec = 'var/wordvec/%s/%s.wv' % (args.dataset, args.wordvec)
     logging.info('Loading word vectors: %s', args.wordvec)
     logging.info('Loading data parser: %s' % args.parser)
     parser = import_module('src.parsers.%s' % args.parser)
