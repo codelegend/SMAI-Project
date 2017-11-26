@@ -81,7 +81,7 @@ def parse_args(args=None):
 
     # Test: test the CNN
     parser_test = subparsers.add_parser('test', help='Use the CNN', parents=[common_parser], formatter_class=ADHF)
-    parser_test.add_argument('--batch-size', default=100,
+    parser_test.add_argument('--batch-size', type=int, default=100,
         help='Mini-batch size for the CNN')
     parser_test.add_argument('--load-from', default=None,
         help='Load weights from file (checkpoint)')
@@ -102,7 +102,6 @@ def main():
         args = parse_args(args)
     else:
         args = parse_args()
-    print args
     setup_logging(args)
 
     if args.cuda:
