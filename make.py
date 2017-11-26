@@ -42,20 +42,20 @@ def parse_args(args=None):
         help='Do not use CUDA even if available')
 
     common_config = common_parser.add_argument_group('Data Config')
-    common_config.add_argument('--sentence-len', default=20,
+    common_config.add_argument('--sentence-len', type=int, default=20,
         help='Consider only last <number> words')
-    common_config.add_argument('--wordvec-dim', default=100,
+    common_config.add_argument('--wordvec-dim', type=int, default=100,
         help='Size of word vector')
     common_config.add_argument('--partial-dataset', action='store_true',
         help='Use only a part of the dataset (for debugging)')
 
     # Preprocess: generate word vectors
     parser_preprocess = subparsers.add_parser('preprocess', help='Generate word vectors', parents=[common_parser], formatter_class=ADHF)
-    parser_preprocess.add_argument('-w', '--workers', default=4,
+    parser_preprocess.add_argument('-w', '--workers', type=int, default=4,
         help='Number of workers for gensim')
-    parser_preprocess.add_argument('--num-iter', default=5,
+    parser_preprocess.add_argument('--num-iter', type=int, default=5,
         help='Number of passes')
-    parser_preprocess.add_argument('--min-count', default=5,
+    parser_preprocess.add_argument('--min-count', type=int, default=5,
         help='Minimum occurences of words')
     parser_preprocess.add_argument('--save-vocab', default='words',
         help='Save the vocabulary to file')
@@ -68,7 +68,7 @@ def parse_args(args=None):
         help='Name of the job. Used for logging/checkpointing.')
     parser_train.add_argument('--epochs', type=int, default=100,
         help='Number of epochs to run')
-    parser_train.add_argument('--batch-size', default=100,
+    parser_train.add_argument('--batch-size', type=int, default=100,
         help='Mini-batch size for the CNN')
     parser_train.add_argument('--cache', action='store_true',
         help='Load the entire dataset to memory (use with caution)')
