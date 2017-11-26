@@ -16,61 +16,39 @@ class SentenceLoader(object):
         # test set is labelled
         if mode == 'validate': mode = 'test'
 
-        self.dataset_files = []
-        # load pos samples
-        self.dataset_files.append((os.path.join(dataset_dir,mode,'rt-polarity.neg'), 0))
-        self.dataset_files.append((os.path.join(dataset_dir,mode,'rt-polarity.pos'), 1))
+        # load samples
+        dataset_files = [(os.path.join(dataset_dir,mode,'rt-polarity.neg'), 0),
+                         (os.path.join(dataset_dir,mode,'rt-polarity.pos'), 1)]
 
-        # truncate if partial_dataset
-        # if partial_dataset:
-        #     self.dataset_files = self.dataset_files[:10]
+        self.dataset_samples = []
+        for (fname, label) in dataset_files:
+            with open(fname) as f:
+                lines = f.read().strip().split('\n')
+                for line in lines:
+                    sample = self.process_line(line)
+                    if self.with_label:
+                        sample = (sample, label)
+                    self.dataset_samples.append(sample)
 
         # config
         self.shuffle = shuffle
 
-
     # returns a processed sentence/feature, as per the config.
     def __iter__(self):
-        dataset = copy.copy(self.dataset_files)
         if self.shuffle:
-            np.random.shuffle(dataset)
+            np.random.shuffle(self.dataset_samples)
 
-        for fname, label in dataset:
-            with open(fname) as f:
-                full_text = f.read().strip()
-                reviews = full_text.split('\n')
-                for content in reviews:
-                    content = self.process_line(content)
-                    if self.full_feature:
-                        content_temp = []
-                        for c in content: content_temp.extend(c)
-                        content = [content_temp]
-                    if self.with_label:
-                        content = map(lambda line: (line, label), content)
-
-                    for line in content:
-                        yield line
+        for sample in self.dataset_samples:
+            yield sample
 
     def __len__(self):
-        return len(self.dataset_files)
+        return len(self.dataset_samples)
 
     # return the lines after splitting into words, and filtering.
     def process_line(self, content):
         content = re.sub(r"[^A-Za-z0-9,.!?\']"," ",content)
-        content = re.sub(r"n't"," not ",content)
-        content = re.sub(r"'nt"," not ",content)
-        content = re.sub(r"'","",content)
-        content = re.sub(r","," , ",content)
-        content = re.sub(r"!"," ! ",content)
-        content = re.sub(r"\?"," ? ",content)
-        content = re.sub(r". . .","",content)
-        content = re.sub(r"- -","",content)
-        content = re.sub(r"Mr.","Mr",content)
-        content = re.sub(r"Mrs.","Mrs",content)
-        content = re.sub(r"Ms.","Ms",content)
-        content = content.split('.')
-        content = [line.split() for line in content]
-        return content
+        content = re.sub(r"n't"," not ", content)
+        return content.split()
 
 # **DO NOT CHANGE THE CLASS NAME**
 class DataLoader(object):
@@ -81,7 +59,8 @@ class DataLoader(object):
         self.sentences = SentenceLoader(dataset_dir,
                                         with_label=True,
                                         full_feature=True,
-                                        partial_dataset=partial_dataset, shuffle=shuffle)
+                                        partial_dataset=partial_dataset,
+                                        shuffle=shuffle)
 
         # load the word vectors
         if wordvec_file is None:
@@ -102,7 +81,7 @@ class DataLoader(object):
     # returns [x, y]: feature and label
     def __iter__(self):
         for sentence, label in self.sentences:
-            sentence.reverse()
+            # sentence.reverse()
             wordvec = np.ndarray((0, self.wordvec_dim))
             count = 0 # only add `self.sentence_len` words
             for word in sentence:
@@ -125,9 +104,9 @@ Parser for rt Dataset
 Directory structure:
 <root>
     -train
-        - pos_file
-        - neg_file
+        - rt-polarity.pos
+        - rt-polarity.neg
     -test
-        - pos_file
-        - neg_file
+        - rt-polarity.pos
+        - rt-polarity.neg
 '''
